@@ -1,0 +1,36 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  SERVICE 1 – API Gateway (NodePort – exposed to external traffic / Postman)
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service
+spec:
+  type: NodePort
+  selector:
+    app: pod1-gateway-registration
+  ports:
+    - name: gateway-port
+      protocol: TCP
+      port: 4000          # ClusterIP port
+      targetPort: 4000    # Container port
+      nodePort: 30080     # External port (access via minikube ip:30080)
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+#  SERVICE 2 – Update Service (ClusterIP – internal only, reached via API GW)
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: v1
+kind: Service
+metadata:
+  name: update-service
+spec:
+  type: ClusterIP
+  selector:
+    app: pod2-update-service
+  ports:
+    - name: update-port
+      protocol: TCP
+      port: 5004
+      targetPort: 5004
+

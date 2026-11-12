@@ -1,0 +1,71 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  POD 1 – API Gateway + Registration Service
+#  Both containers run inside a single Deployment (share the same Pod spec)
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod1-gateway-registration
+  labels:
+    app: pod1-gateway-registration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod1-gateway-registration
+  template:
+    metadata:
+      labels:
+        app: pod1-gateway-registration
+    spec:
+      containers:
+        # ── Container 1 : API Gateway ─────────────────────────────────────────
+        - name: api-gateway
+          image: khoyam/api-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+          env:
+            - name: JWT_SECRETE
+              value: "347186591486#^%%ABCF*##GHE"
+            # Registration runs in the same Pod → reachable via localhost
+            - name: REGISTRATION_URL
+              value: "http://localhost:5003"
+            # Update Service runs in Pod 2 → reachable via its ClusterIP Service
+            - name: UPDATE_URL
+              value: "http://update-service:5004"
+
+        # ── Container 2 : Registration Service ────────────────────────────────
+        - name: registration-service
+          image: khoyam/registration-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5003
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+#  POD 2 – Update Service
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod2-update-service
+  labels:
+    app: pod2-update-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod2-update-service
+  template:
+    metadata:
+      labels:
+        app: pod2-update-service
+    spec:
+      containers:
+        # ── Container : Update Service ─────────────────────────────────────────
+        - name: update-service
+          image: khoyam/update-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5004
